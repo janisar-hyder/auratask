@@ -3,15 +3,24 @@ import { TaskItem } from "@/components/TaskItem";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
   const { toast } = useToast();
 
   const addTask = (taskData: {
     title: string;
     priority: "high" | "medium" | "low";
     category: "Personal" | "Work";
+    deadline?: Date;
   }) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -42,6 +51,26 @@ const Index = () => {
     });
   };
 
+  const sortTasks = (tasks: Task[]) => {
+    return [...tasks].sort((a, b) => {
+      switch (sortBy) {
+        case "priority":
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        case "deadline":
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        case "category":
+          return a.category.localeCompare(b.category);
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const sortedTasks = sortTasks(tasks);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
@@ -56,8 +85,21 @@ const Index = () => {
           <div className="space-y-6">
             <AddTask onAdd={addTask} />
 
+            <div className="flex justify-end">
+              <Select value={sortBy} onValueChange={(value: "priority" | "deadline" | "category") => setSortBy(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="priority">Sort by Priority</SelectItem>
+                  <SelectItem value="deadline">Sort by Deadline</SelectItem>
+                  <SelectItem value="category">Sort by Category</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-4">
-              {tasks.map((task) => (
+              {sortedTasks.map((task) => (
                 <TaskItem
                   key={task.id}
                   task={task}

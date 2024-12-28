@@ -1,6 +1,8 @@
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, Calendar } from "lucide-react";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskItemProps {
   task: Task;
@@ -13,6 +15,12 @@ export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
     high: "bg-priority-high",
     medium: "bg-priority-medium",
     low: "bg-priority-low",
+  };
+
+  const priorityBadgeColors = {
+    high: "bg-red-100 text-red-800",
+    medium: "bg-yellow-100 text-yellow-800",
+    low: "bg-green-100 text-green-800",
   };
 
   return (
@@ -28,20 +36,30 @@ export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
       </button>
       
       <div className="flex-1">
-        <p className={cn(
-          "text-sm font-medium transition-colors",
-          task.completed ? "text-muted-foreground line-through" : "text-foreground"
-        )}>
-          {task.title}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className={cn(
+            "text-sm font-medium transition-colors",
+            task.completed ? "text-muted-foreground line-through" : "text-foreground"
+          )}>
+            {task.title}
+          </p>
+          <Badge variant="secondary" className={cn("text-xs", priorityBadgeColors[task.priority])}>
+            {task.priority}
+          </Badge>
+          <Badge variant="outline">{task.category}</Badge>
+        </div>
+        
         <div className="mt-1 flex items-center gap-2">
           <span className={cn(
             "inline-block h-2 w-2 rounded-full",
             priorityColors[task.priority]
           )} />
-          <span className="text-xs text-muted-foreground">
-            {task.category}
-          </span>
+          {task.deadline && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(task.deadline), "PPP")}
+            </span>
+          )}
         </div>
       </div>
 
