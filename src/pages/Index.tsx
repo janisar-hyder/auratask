@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TaskItem } from "@/components/TaskItem";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -13,14 +13,17 @@ import {
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<string[]>(["Personal", "Work"]);
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
   const { toast } = useToast();
 
   const addTask = (taskData: {
     title: string;
+    description?: string;
     priority: "high" | "medium" | "low";
-    category: "Personal" | "Work";
+    category: string;
     deadline?: Date;
+    estimatedTime?: number;
   }) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -29,6 +32,11 @@ const Index = () => {
     };
     
     setTasks((prev) => [newTask, ...prev]);
+    
+    if (!categories.includes(taskData.category)) {
+      setCategories((prev) => [...prev, taskData.category]);
+    }
+    
     toast({
       title: "Task added",
       description: "Your new task has been created successfully.",
@@ -48,6 +56,18 @@ const Index = () => {
     toast({
       title: "Task deleted",
       description: "The task has been removed successfully.",
+    });
+  };
+
+  const editTask = (id: string, updates: Partial<Task>) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, ...updates } : task
+      )
+    );
+    toast({
+      title: "Task updated",
+      description: "The task has been updated successfully.",
     });
   };
 
@@ -83,7 +103,7 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
-            <AddTask onAdd={addTask} />
+            <AddTask onAdd={addTask} categories={categories} />
 
             <div className="flex justify-end">
               <Select value={sortBy} onValueChange={(value: "priority" | "deadline" | "category") => setSortBy(value)}>
@@ -105,6 +125,7 @@ const Index = () => {
                   task={task}
                   onComplete={completeTask}
                   onDelete={deleteTask}
+                  onEdit={editTask}
                 />
               ))}
               

@@ -1,16 +1,42 @@
-import { Check, Trash2, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Check, Trash2, Calendar, Edit2, X, Save } from "lucide-react";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskItemProps {
   task: Task;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string, updates: Partial<Task>) => void;
 }
 
-export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
+export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(task.title);
+  const [editedDescription, setEditedDescription] = useState(task.description || "");
+  const [editedPriority, setEditedPriority] = useState(task.priority);
+
+  const handleSave = () => {
+    onEdit(task.id, {
+      title: editedTitle,
+      description: editedDescription,
+      priority: editedPriority,
+    });
+    setIsEditing(false);
+  };
+
   const priorityColors = {
     high: "bg-priority-high",
     medium: "bg-priority-medium",
@@ -22,6 +48,49 @@ export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
     medium: "bg-yellow-100 text-yellow-800",
     low: "bg-green-100 text-green-800",
   };
+
+  if (isEditing) {
+    return (
+      <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="space-y-4">
+          <Input
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            placeholder="Task title"
+          />
+          
+          <Textarea
+            value={editedDescription}
+            onChange={(e) => setEditedDescription(e.target.value)}
+            placeholder="Task description"
+          />
+          
+          <div className="flex items-center gap-2">
+            <Select value={editedPriority} onValueChange={setEditedPriority}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button onClick={handleSave} size="sm">
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+            
+            <Button onClick={() => setIsEditing(false)} variant="outline" size="sm">
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group flex items-center gap-3 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
@@ -47,9 +116,20 @@ export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
             {task.priority}
           </Badge>
           <Badge variant="outline">{task.category}</Badge>
+          {task.estimatedTime && (
+            <Badge variant="outline" className="ml-2">
+              {task.estimatedTime}h
+            </Badge>
+          )}
         </div>
         
-        <div className="mt-1 flex items-center gap-2">
+        {task.description && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {task.description}
+          </p>
+        )}
+        
+        <div className="mt-2 flex items-center gap-2">
           <span className={cn(
             "inline-block h-2 w-2 rounded-full",
             priorityColors[task.priority]
@@ -63,12 +143,21 @@ export const TaskItem = ({ task, onComplete, onDelete }: TaskItemProps) => {
         </div>
       </div>
 
-      <button
-        onClick={() => onDelete(task.id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => setIsEditing(true)}
+          className="text-muted-foreground hover:text-primary"
+        >
+          <Edit2 className="h-4 w-4" />
+        </button>
+        
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 };
