@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TaskItem } from "@/components/TaskItem";
+import { TaskInsights } from "@/components/TaskInsights";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -71,6 +72,48 @@ const Index = () => {
     });
   };
 
+  const assignTask = (taskId: string, userId: string) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId ? { ...task, assignedTo: userId } : task
+      )
+    );
+  };
+
+  const addCollaborator = (taskId: string, userId: string) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              collaborators: [...(task.collaborators || []), userId],
+            }
+          : task
+      )
+    );
+  };
+
+  const addComment = (taskId: string, comment: string) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: [
+                ...(task.comments || []),
+                {
+                  id: crypto.randomUUID(),
+                  text: comment,
+                  author: "Current User",
+                  createdAt: new Date(),
+                },
+              ],
+            }
+          : task
+      )
+    );
+  };
+
   const sortTasks = (tasks: Task[]) => {
     return [...tasks].sort((a, b) => {
       switch (sortBy) {
@@ -94,7 +137,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-4xl">
           <div className="mb-8">
             <h1 className="text-4xl font-bold tracking-tight">Tasks</h1>
             <p className="mt-2 text-muted-foreground">
@@ -103,6 +146,8 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
+            <TaskInsights tasks={tasks} currentTask={sortedTasks[0]} />
+            
             <AddTask onAdd={addTask} categories={categories} />
 
             <div className="flex justify-end">
@@ -126,6 +171,9 @@ const Index = () => {
                   onComplete={completeTask}
                   onDelete={deleteTask}
                   onEdit={editTask}
+                  onAssign={assignTask}
+                  onAddCollaborator={addCollaborator}
+                  onAddComment={addComment}
                 />
               ))}
               

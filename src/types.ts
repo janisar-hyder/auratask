@@ -8,4 +8,20 @@ export interface Task {
   deadline?: Date;
   assignedTo?: string;
   estimatedTime?: number;
+  actualTime?: number;
+  completedAt?: Date;
+  collaborators?: string[];
+  comments?: {
+    id: string;
+    text: string;
+    author: string;
+    createdAt: Date;
+  }[];
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
 }

@@ -20,9 +20,20 @@ interface TaskItemProps {
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: Partial<Task>) => void;
+  onAssign?: (taskId: string, userId: string) => void;
+  onAddCollaborator?: (taskId: string, userId: string) => void;
+  onAddComment?: (taskId: string, comment: string) => void;
 }
 
-export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) => {
+export const TaskItem = ({ 
+  task, 
+  onComplete, 
+  onDelete, 
+  onEdit,
+  onAssign,
+  onAddCollaborator,
+  onAddComment,
+}: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description || "");
@@ -49,8 +60,9 @@ export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) 
     low: "bg-green-100 text-green-800",
   };
 
-  if (isEditing) {
-    return (
+  return (
+    <div className="group rounded-lg border bg-card p-4 shadow-sm space-y-4">
+      {isEditing ? (
       <div className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="space-y-4">
           <Input
@@ -92,11 +104,9 @@ export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) 
           </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="group flex items-center gap-3 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+      ) : (
+        <>
+          <div className="flex items-center gap-3">
       <button
         onClick={() => onComplete(task.id)}
         className={cn(
@@ -161,6 +171,20 @@ export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) 
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
+          </div>
+          
+          {(onAssign || onAddCollaborator || onAddComment) && (
+            <TaskCollaboration
+              taskId={task.id}
+              assignedTo={task.assignedTo}
+              collaborators={task.collaborators}
+              onAssign={onAssign!}
+              onAddCollaborator={onAddCollaborator!}
+              onAddComment={onAddComment!}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };
