@@ -26,7 +26,7 @@ export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) 
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description || "");
-  const [editedPriority, setEditedPriority] = useState(task.priority);
+  const [editedPriority, setEditedPriority] = useState<"high" | "medium" | "low">(task.priority);
 
   const handleSave = () => {
     onEdit(task.id, {
@@ -66,7 +66,10 @@ export const TaskItem = ({ task, onComplete, onDelete, onEdit }: TaskItemProps) 
           />
           
           <div className="flex items-center gap-2">
-            <Select value={editedPriority} onValueChange={setEditedPriority}>
+            <Select 
+              value={editedPriority} 
+              onValueChange={(value: "high" | "medium" | "low") => setEditedPriority(value)}
+            >
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
