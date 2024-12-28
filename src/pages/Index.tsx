@@ -4,6 +4,8 @@ import { TaskInsights } from "@/components/TaskInsights";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,7 +18,16 @@ const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<string[]>(["Personal", "Work"]);
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
+  const [view, setView] = useState<"list" | "kanban">("list");
   const { toast } = useToast();
+
+  // Theme toggle function
+  const toggleTheme = () => {
+    const html = document.documentElement;
+    const currentTheme = html.classList.contains("dark") ? "light" : "dark";
+    html.classList.remove("light", "dark");
+    html.classList.add(currentTheme);
+  };
 
   const addTask = (taskData: {
     title: string;
@@ -134,15 +145,76 @@ const Index = () => {
 
   const sortedTasks = sortTasks(tasks);
 
+  const renderKanbanBoard = () => {
+    const columns = {
+      todo: sortedTasks.filter(task => !task.completed),
+      done: sortedTasks.filter(task => task.completed),
+    };
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">To Do</h2>
+          <div className="space-y-4">
+            {columns.todo.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onComplete={completeTask}
+                onDelete={deleteTask}
+                onEdit={editTask}
+                onAssign={assignTask}
+                onAddCollaborator={addCollaborator}
+                onAddComment={addComment}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Done</h2>
+          <div className="space-y-4">
+            {columns.done.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onComplete={completeTask}
+                onDelete={deleteTask}
+                onEdit={editTask}
+                onAssign={assignTask}
+                onAddCollaborator={addCollaborator}
+                onAddComment={addComment}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container py-8">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold tracking-tight">Tasks</h1>
-            <p className="mt-2 text-muted-foreground">
-              Manage your tasks and stay organized
-            </p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">Tasks</h1>
+              <p className="mt-2 text-muted-foreground">
+                Manage your tasks and stay organized
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="icon" onClick={toggleTheme}>
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setView(view === "list" ? "kanban" : "list")}
+              >
+                {view === "list" ? "Kanban View" : "List View"}
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -163,28 +235,32 @@ const Index = () => {
               </Select>
             </div>
 
-            <div className="space-y-4">
-              {sortedTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onComplete={completeTask}
-                  onDelete={deleteTask}
-                  onEdit={editTask}
-                  onAssign={assignTask}
-                  onAddCollaborator={addCollaborator}
-                  onAddComment={addComment}
-                />
-              ))}
-              
-              {tasks.length === 0 && (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <p className="text-muted-foreground">
-                    No tasks yet. Add your first task above!
-                  </p>
-                </div>
-              )}
-            </div>
+            {view === "list" ? (
+              <div className="space-y-4">
+                {sortedTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onComplete={completeTask}
+                    onDelete={deleteTask}
+                    onEdit={editTask}
+                    onAssign={assignTask}
+                    onAddCollaborator={addCollaborator}
+                    onAddComment={addComment}
+                  />
+                ))}
+                
+                {tasks.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <p className="text-muted-foreground">
+                      No tasks yet. Add your first task above!
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              renderKanbanBoard()
+            )}
           </div>
         </div>
       </div>
