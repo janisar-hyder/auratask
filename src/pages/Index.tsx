@@ -4,8 +4,7 @@ import { TaskInsights } from "@/components/TaskInsights";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TaskHeader } from "@/components/TaskHeader";
 import {
   Select,
   SelectContent,
@@ -13,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTheme } from "@/components/ThemeProvider";
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -21,9 +19,6 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
   const [view, setView] = useState<"list" | "kanban">("list");
   const { toast } = useToast();
-  const { theme, toggleTheme } = useTheme();
-
-  // Remove the old toggleTheme function since we're using the one from context now
 
   const addTask = (taskData: {
     title: string;
@@ -191,27 +186,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight">Tasks</h1>
-              <p className="mt-2 text-muted-foreground">
-                Manage your tasks and stay organized
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="icon" onClick={toggleTheme}>
-                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setView(view === "list" ? "kanban" : "list")}
-              >
-                {view === "list" ? "Kanban View" : "List View"}
-              </Button>
-            </div>
-          </div>
+          <TaskHeader />
 
           <div className="space-y-6">
             <TaskInsights tasks={tasks} currentTask={sortedTasks[0]} />
