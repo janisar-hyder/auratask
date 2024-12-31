@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTheme } from "@/components/ThemeProvider";
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -20,14 +21,9 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
   const [view, setView] = useState<"list" | "kanban">("list");
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
 
-  // Theme toggle function
-  const toggleTheme = () => {
-    const html = document.documentElement;
-    const currentTheme = html.classList.contains("dark") ? "light" : "dark";
-    html.classList.remove("light", "dark");
-    html.classList.add(currentTheme);
-  };
+  // Remove the old toggleTheme function since we're using the one from context now
 
   const addTask = (taskData: {
     title: string;
