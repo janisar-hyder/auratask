@@ -17,7 +17,11 @@ export const taskService = {
           category: task.category,
           deadline: task.deadline,
           estimated_time: task.estimatedTime,
-          completed: false
+          completed: task.completed,
+          completedAt: task.completedAt,
+          assignedTo: task.assignedTo,
+          collaborators: task.collaborators,
+          comments: task.comments,
         }
       ])
       .select()
@@ -45,13 +49,14 @@ export const taskService = {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
 
-    if (updates.completed) {
-      updates.completed_at = new Date().toISOString();
-    }
+    const dbUpdates = {
+      ...updates,
+      completedAt: updates.completedAt?.toISOString(),
+    };
 
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', taskId)
       .eq('user_id', user.user.id)
       .select()
