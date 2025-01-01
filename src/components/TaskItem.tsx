@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { TaskCollaboration } from "@/components/TaskCollaboration";
 import {
   Select,
   SelectContent,
@@ -21,9 +20,6 @@ interface TaskItemProps {
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: Partial<Task>) => void;
-  onAssign?: (taskId: string, userId: string) => void;
-  onAddCollaborator?: (taskId: string, userId: string) => void;
-  onAddComment?: (taskId: string, comment: string) => void;
 }
 
 export const TaskItem = ({ 
@@ -31,9 +27,6 @@ export const TaskItem = ({
   onComplete, 
   onDelete, 
   onEdit,
-  onAssign,
-  onAddCollaborator,
-  onAddComment,
 }: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
@@ -106,85 +99,72 @@ export const TaskItem = ({
         </div>
       </div>
       ) : (
-        <>
-          <div className="flex items-center gap-3">
-      <button
-        onClick={() => onComplete(task.id)}
-        className={cn(
-          "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
-          task.completed ? "bg-primary border-primary" : "border-gray-300 hover:border-primary"
-        )}
-      >
-        {task.completed && <Check className="h-3 w-3 text-primary-foreground" />}
-      </button>
-      
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <p className={cn(
-            "text-sm font-medium transition-colors",
-            task.completed ? "text-muted-foreground line-through" : "text-foreground"
-          )}>
-            {task.title}
-          </p>
-          <Badge variant="secondary" className={cn("text-xs", priorityBadgeColors[task.priority])}>
-            {task.priority}
-          </Badge>
-          <Badge variant="outline">{task.category}</Badge>
-          {task.estimatedTime && (
-            <Badge variant="outline" className="ml-2">
-              {task.estimatedTime}h
-            </Badge>
-          )}
-        </div>
-        
-        {task.description && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {task.description}
-          </p>
-        )}
-        
-        <div className="mt-2 flex items-center gap-2">
-          <span className={cn(
-            "inline-block h-2 w-2 rounded-full",
-            priorityColors[task.priority]
-          )} />
-          {task.deadline && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              {format(new Date(task.deadline), "PPP")}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => setIsEditing(true)}
-          className="text-muted-foreground hover:text-primary"
-        >
-          <Edit2 className="h-4 w-4" />
-        </button>
-        
-        <button
-          onClick={() => onDelete(task.id)}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onComplete(task.id)}
+            className={cn(
+              "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
+              task.completed ? "bg-primary border-primary" : "border-gray-300 hover:border-primary"
+            )}
+          >
+            {task.completed && <Check className="h-3 w-3 text-primary-foreground" />}
+          </button>
           
-          {(onAssign || onAddCollaborator || onAddComment) && (
-            <TaskCollaboration
-              taskId={task.id}
-              assignedTo={task.assignedTo}
-              collaborators={task.collaborators}
-              onAssign={onAssign!}
-              onAddCollaborator={onAddCollaborator!}
-              onAddComment={onAddComment!}
-            />
-          )}
-        </>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className={cn(
+                "text-sm font-medium transition-colors",
+                task.completed ? "text-muted-foreground line-through" : "text-foreground"
+              )}>
+                {task.title}
+              </p>
+              <Badge variant="secondary" className={cn("text-xs", priorityBadgeColors[task.priority])}>
+                {task.priority}
+              </Badge>
+              <Badge variant="outline">{task.category}</Badge>
+              {task.estimatedTime && (
+                <Badge variant="outline" className="ml-2">
+                  {task.estimatedTime}h
+                </Badge>
+              )}
+            </div>
+            
+            {task.description && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {task.description}
+              </p>
+            )}
+            
+            <div className="mt-2 flex items-center gap-2">
+              <span className={cn(
+                "inline-block h-2 w-2 rounded-full",
+                priorityColors[task.priority]
+              )} />
+              {task.deadline && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(task.deadline), "PPP")}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+            
+            <button
+              onClick={() => onDelete(task.id)}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -6,17 +6,10 @@ export interface Task {
   priority: "high" | "medium" | "low";
   category: string;
   deadline?: Date;
-  assignedTo?: string;
   estimatedTime?: number;
   actualTime?: number;
   completedAt?: Date;
   collaborators?: string[];
-  comments?: {
-    id: string;
-    text: string;
-    author: string;
-    createdAt: Date;
-  }[];
 }
 
 export interface TeamMember {

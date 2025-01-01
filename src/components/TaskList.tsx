@@ -6,9 +6,6 @@ interface TaskListProps {
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: Partial<Task>) => void;
-  onAssign: (taskId: string, userId: string) => void;
-  onAddCollaborator: (taskId: string, userId: string) => void;
-  onAddComment: (taskId: string, comment: string) => void;
 }
 
 export const TaskList = ({
@@ -16,9 +13,6 @@ export const TaskList = ({
   onComplete,
   onDelete,
   onEdit,
-  onAssign,
-  onAddCollaborator,
-  onAddComment,
 }: TaskListProps) => {
   return (
     <div className="space-y-4">
@@ -29,9 +23,6 @@ export const TaskList = ({
           onComplete={onComplete}
           onDelete={onDelete}
           onEdit={onEdit}
-          onAssign={onAssign}
-          onAddCollaborator={onAddCollaborator}
-          onAddComment={onAddComment}
         />
       ))}
       
