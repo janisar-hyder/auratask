@@ -6,26 +6,34 @@ import { TaskList } from "@/components/TaskList";
 import { TaskSort } from "@/components/TaskSort";
 import { useTasks } from "@/hooks/useTasks";
 import { Task } from "@/types";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
+  const [filter, setFilter] = useState<"all" | "todo" | "done">("all");
   const { tasks, categories, addTask, completeTask, deleteTask, editTask } = useTasks();
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    switch (sortBy) {
-      case "priority":
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      case "deadline":
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      case "category":
-        return a.category.localeCompare(b.category);
-      default:
-        return 0;
-    }
-  });
+  const sortedAndFilteredTasks = [...tasks]
+    .filter((task) => {
+      if (filter === "todo") return !task.completed;
+      if (filter === "done") return task.completed;
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "priority":
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        case "deadline":
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        case "category":
+          return a.category.localeCompare(b.category);
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,10 +46,33 @@ const Index = () => {
             
             <AddTask onAdd={addTask} categories={categories} />
 
-            <TaskSort sortBy={sortBy} onSortChange={setSortBy} />
+            <div className="flex items-center justify-between gap-4">
+              <TaskSort sortBy={sortBy} onSortChange={setSortBy} />
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={filter === "all" ? "default" : "outline"}
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filter === "todo" ? "default" : "outline"}
+                  onClick={() => setFilter("todo")}
+                >
+                  Todo
+                </Button>
+                <Button
+                  variant={filter === "done" ? "default" : "outline"}
+                  onClick={() => setFilter("done")}
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
 
             <TaskList
-              tasks={sortedTasks}
+              tasks={sortedAndFilteredTasks}
               onComplete={completeTask}
               onDelete={deleteTask}
               onEdit={editTask}
