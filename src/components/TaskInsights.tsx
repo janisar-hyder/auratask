@@ -17,35 +17,45 @@ interface UserStats {
   completed_tasks: number;
 }
 
+const DEFAULT_STATS: UserStats = {
+  avg_completion_time: 0,
+  completion_rate: 0,
+  total_tasks: 0,
+  completed_tasks: 0
+};
+
 export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [userStats, setUserStats] = useState<UserStats>(DEFAULT_STATS);
 
   useEffect(() => {
     const loadUserStats = async () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      // Use upsert operation to handle race conditions
-      const { data: stats, error } = await supabase
+      // First, try to get existing stats
+      const { data: existingStats } = await supabase
         .from('user_stats')
-        .upsert(
-          {
-            user_id: user.user.id,
-            avg_completion_time: 0,
-            completion_rate: 0,
-            total_tasks: 0,
-            completed_tasks: 0
-          },
-          {
-            onConflict: 'user_id',
-            ignoreDuplicates: true
-          }
-        )
+        .select('*')
+        .eq('user_id', user.user.id)
+        .maybeSingle();
+
+      if (existingStats) {
+        setUserStats(existingStats);
+        return;
+      }
+
+      // If no stats exist, create them
+      const { data: newStats, error: insertError } = await supabase
+        .from('user_stats')
+        .insert({
+          user_id: user.user.id,
+          ...DEFAULT_STATS
+        })
         .select()
         .single();
 
-      if (!error && stats) {
-        setUserStats(stats);
+      if (!insertError && newStats) {
+        setUserStats(newStats);
       }
     };
 
@@ -80,8 +90,8 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
     }
 
     return {
-      avgCompletionTime: userStats?.avg_completion_time || 0,
-      completionRate: userStats?.completion_rate || 0,
+      avgCompletionTime: userStats.avg_completion_time,
+      completionRate: userStats.completion_rate,
       priorityStats,
       predictedTime,
     };
