@@ -25,14 +25,32 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const { data } = await supabase
+      // Try to get existing stats
+      const { data: existingStats, error: fetchError } = await supabase
         .from('user_stats')
         .select('*')
         .eq('user_id', user.user.id)
-        .single();
+        .maybeSingle();
 
-      if (data) {
-        setUserStats(data);
+      // If no stats exist, create initial stats
+      if (!existingStats && !fetchError) {
+        const { data: newStats, error: insertError } = await supabase
+          .from('user_stats')
+          .insert({
+            user_id: user.user.id,
+            avg_completion_time: 0,
+            completion_rate: 0,
+            total_tasks: 0,
+            completed_tasks: 0
+          })
+          .select()
+          .single();
+
+        if (!insertError && newStats) {
+          setUserStats(newStats);
+        }
+      } else if (existingStats) {
+        setUserStats(existingStats);
       }
     };
 
