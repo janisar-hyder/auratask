@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { TeamMember } from "@/types";
-import { UserPlus, MessageSquare, Clock } from "lucide-react";
+import { UserPlus, MessageSquare } from "lucide-react";
 
 interface TaskCollaborationProps {
   taskId: string;
@@ -25,7 +25,7 @@ interface TaskCollaborationProps {
 export const TaskCollaboration = ({
   taskId,
   assignedTo,
-  collaborators = [],
+  collaborators = [], // Provide default empty array
   onAssign,
   onAddCollaborator,
   onAddComment,
@@ -40,6 +40,7 @@ export const TaskCollaboration = ({
   ];
 
   const handleAssign = (userId: string) => {
+    if (!userId) return;
     onAssign(taskId, userId);
     toast({
       title: "Task assigned",
@@ -80,14 +81,14 @@ export const TaskCollaboration = ({
         </Select>
 
         <div className="flex -space-x-2">
-          {collaborators.map((collaboratorId) => {
+          {Array.isArray(collaborators) && collaborators.map((collaboratorId) => {
             const member = teamMembers.find(m => m.id === collaboratorId);
-            return (
+            return member ? (
               <Avatar key={collaboratorId} className="h-8 w-8 border-2 border-background">
-                <AvatarImage src={member?.avatar} />
-                <AvatarFallback>{member?.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={member.avatar} />
+                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
               </Avatar>
-            );
+            ) : null;
           })}
           <Button
             variant="outline"
