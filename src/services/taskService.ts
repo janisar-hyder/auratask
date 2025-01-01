@@ -18,8 +18,8 @@ export const taskService = {
           deadline: task.deadline,
           estimated_time: task.estimatedTime,
           completed: task.completed,
-          completedAt: task.completedAt,
-          assignedTo: task.assignedTo,
+          completed_at: task.completedAt,
+          assigned_to: task.assignedTo,
           collaborators: task.collaborators,
           comments: task.comments,
         }
@@ -37,22 +37,50 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        id,
+        title,
+        description,
+        priority,
+        category,
+        deadline,
+        estimated_time,
+        completed,
+        completed_at,
+        assigned_to,
+        collaborators,
+        comments
+      `)
       .eq('user_id', user.user.id)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    
+    // Transform the data to match our frontend types
+    return data.map(task => ({
+      ...task,
+      estimatedTime: task.estimated_time,
+      completedAt: task.completed_at,
+      assignedTo: task.assigned_to,
+    }));
   },
 
   async updateTask(taskId: string, updates: Partial<Task>) {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
 
+    // Transform frontend model to database model
     const dbUpdates = {
       ...updates,
-      completedAt: updates.completedAt?.toISOString(),
+      estimated_time: updates.estimatedTime,
+      completed_at: updates.completedAt,
+      assigned_to: updates.assignedTo,
     };
+
+    // Remove frontend-specific fields
+    delete dbUpdates.estimatedTime;
+    delete dbUpdates.completedAt;
+    delete dbUpdates.assignedTo;
 
     const { data, error } = await supabase
       .from('tasks')
