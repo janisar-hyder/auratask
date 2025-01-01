@@ -1,23 +1,46 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Brain, Clock, TrendingUp } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface TaskInsightsProps {
   tasks: Task[];
   currentTask?: Task;
 }
 
-export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
-  const insights = useMemo(() => {
-    // Calculate average completion time
-    const completedTasks = tasks.filter(t => t.completed && t.completedAt && t.estimatedTime);
-    const avgCompletionTime = completedTasks.length > 0
-      ? completedTasks.reduce((acc, task) => acc + (task.actualTime || 0), 0) / completedTasks.length
-      : 0;
+interface UserStats {
+  avg_completion_time: number;
+  completion_rate: number;
+  total_tasks: number;
+  completed_tasks: number;
+}
 
-    // Calculate completion rate by priority
+export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+
+  useEffect(() => {
+    const loadUserStats = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      const { data } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .single();
+
+      if (data) {
+        setUserStats(data);
+      }
+    };
+
+    loadUserStats();
+  }, [tasks]);
+
+  const insights = useMemo(() => {
+    // Calculate priority-specific completion rates
     const priorityStats = {
       high: { total: 0, completed: 0 },
       medium: { total: 0, completed: 0 },
@@ -31,7 +54,7 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
       }
     });
 
-    // Predict time for current task
+    // Predict time for current task based on historical data
     let predictedTime = 0;
     if (currentTask) {
       const similarTasks = tasks.filter(t => 
@@ -45,11 +68,12 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
     }
 
     return {
-      avgCompletionTime,
+      avgCompletionTime: userStats?.avg_completion_time || 0,
+      completionRate: userStats?.completion_rate || 0,
       priorityStats,
       predictedTime,
     };
-  }, [tasks, currentTask]);
+  }, [tasks, currentTask, userStats]);
 
   return (
     <div className="grid gap-4 md:grid-cols-3">

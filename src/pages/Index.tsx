@@ -1,17 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { TaskItem } from "@/components/TaskItem";
 import { TaskInsights } from "@/components/TaskInsights";
 import { AddTask } from "@/components/AddTask";
 import { Task } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { TaskHeader } from "@/components/TaskHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { taskService } from "@/services/taskService";
+import { supabase } from "@/lib/supabase";
 
 const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -19,8 +15,39 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"priority" | "deadline" | "category">("priority");
   const [view, setView] = useState<"list" | "kanban">("list");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const addTask = (taskData: {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+        return;
+      }
+      loadTasks();
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const loadTasks = async () => {
+    try {
+      const tasks = await taskService.getUserTasks();
+      setTasks(tasks);
+      const uniqueCategories = [...new Set(tasks.map(t => t.category))];
+      if (uniqueCategories.length > 0) {
+        setCategories(uniqueCategories);
+      }
+    } catch (error) {
+      toast({
+        title: "Error loading tasks",
+        description: "Failed to load your tasks. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addTask = async (taskData: {
     title: string;
     description?: string;
     priority: "high" | "medium" | "low";
@@ -28,92 +55,80 @@ const Index = () => {
     deadline?: Date;
     estimatedTime?: number;
   }) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      completed: false,
-      ...taskData,
-    };
-    
-    setTasks((prev) => [newTask, ...prev]);
-    
-    if (!categories.includes(taskData.category)) {
-      setCategories((prev) => [...prev, taskData.category]);
+    try {
+      await taskService.createTask(taskData);
+      await loadTasks();
+      await taskService.updateUserStats();
+      
+      toast({
+        title: "Task added",
+        description: "Your new task has been created successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error adding task",
+        description: "Failed to add the task. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    toast({
-      title: "Task added",
-      description: "Your new task has been created successfully.",
-    });
   };
 
-  const completeTask = (id: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const completeTask = async (id: string) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      await taskService.updateTask(id, { 
+        completed: !task.completed,
+        completedAt: !task.completed ? new Date() : undefined
+      });
+      await loadTasks();
+      await taskService.updateUserStats();
+    } catch (error) {
+      toast({
+        title: "Error updating task",
+        description: "Failed to update the task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-    toast({
-      title: "Task deleted",
-      description: "The task has been removed successfully.",
-    });
+  const deleteTask = async (id: string) => {
+    try {
+      await taskService.deleteTask(id);
+      await loadTasks();
+      await taskService.updateUserStats();
+      
+      toast({
+        title: "Task deleted",
+        description: "The task has been removed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting task",
+        description: "Failed to delete the task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const editTask = (id: string, updates: Partial<Task>) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, ...updates } : task
-      )
-    );
-    toast({
-      title: "Task updated",
-      description: "The task has been updated successfully.",
-    });
-  };
-
-  const assignTask = (taskId: string, userId: string) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId ? { ...task, assignedTo: userId } : task
-      )
-    );
-  };
-
-  const addCollaborator = (taskId: string, userId: string) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId
-          ? {
-              ...task,
-              collaborators: [...(task.collaborators || []), userId],
-            }
-          : task
-      )
-    );
-  };
-
-  const addComment = (taskId: string, comment: string) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId
-          ? {
-              ...task,
-              comments: [
-                ...(task.comments || []),
-                {
-                  id: crypto.randomUUID(),
-                  text: comment,
-                  author: "Current User",
-                  createdAt: new Date(),
-                },
-              ],
-            }
-          : task
-      )
-    );
+  const editTask = async (id: string, updates: Partial<Task>) => {
+    try {
+      await taskService.updateTask(id, updates);
+      await loadTasks();
+      await taskService.updateUserStats();
+      
+      toast({
+        title: "Task updated",
+        description: "The task has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating task",
+        description: "Failed to update the task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const sortTasks = (tasks: Task[]) => {
@@ -189,7 +204,7 @@ const Index = () => {
           <TaskHeader />
 
           <div className="space-y-6">
-            <TaskInsights tasks={tasks} currentTask={sortedTasks[0]} />
+            <TaskInsights tasks={tasks} currentTask={tasks[0]} />
             
             <AddTask onAdd={addTask} categories={categories} />
 
