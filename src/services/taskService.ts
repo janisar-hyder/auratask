@@ -19,9 +19,7 @@ export const taskService = {
           estimated_time: task.estimatedTime,
           completed: task.completed,
           completed_at: task.completedAt,
-          assigned_to: task.assignedTo,
           collaborators: task.collaborators,
-          comments: task.comments,
         }
       ])
       .select()
@@ -47,9 +45,7 @@ export const taskService = {
         estimated_time,
         completed,
         completed_at,
-        assigned_to,
-        collaborators,
-        comments
+        collaborators
       `)
       .eq('user_id', user.user.id)
       .order('created_at', { ascending: false });
@@ -61,7 +57,6 @@ export const taskService = {
       ...task,
       estimatedTime: task.estimated_time,
       completedAt: task.completed_at,
-      assignedTo: task.assigned_to,
     }));
   },
 
@@ -74,13 +69,11 @@ export const taskService = {
       ...updates,
       estimated_time: updates.estimatedTime,
       completed_at: updates.completedAt,
-      assigned_to: updates.assignedTo,
     };
 
     // Remove frontend-specific fields
     delete dbUpdates.estimatedTime;
     delete dbUpdates.completedAt;
-    delete dbUpdates.assignedTo;
 
     const { data, error } = await supabase
       .from('tasks')

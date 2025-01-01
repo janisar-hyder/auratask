@@ -27,37 +27,6 @@ const Index = () => {
     }
   });
 
-  const handleAssignTask = async (taskId: string, userId: string) => {
-    await editTask(taskId, { assignedTo: userId });
-  };
-
-  const handleAddCollaborator = async (taskId: string, userId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    
-    const collaborators = [...(task.collaborators || [])];
-    if (!collaborators.includes(userId)) {
-      collaborators.push(userId);
-    }
-    
-    await editTask(taskId, { collaborators });
-  };
-
-  const handleAddComment = async (taskId: string, comment: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    
-    const comments = [...(task.comments || [])];
-    comments.push({
-      id: crypto.randomUUID(),
-      text: comment,
-      author: "Current User",
-      createdAt: new Date(),
-    });
-    
-    await editTask(taskId, { comments });
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8">
@@ -76,9 +45,6 @@ const Index = () => {
               onComplete={completeTask}
               onDelete={deleteTask}
               onEdit={editTask}
-              onAssign={handleAssignTask}
-              onAddCollaborator={handleAddCollaborator}
-              onAddComment={handleAddComment}
             />
           </div>
         </div>
