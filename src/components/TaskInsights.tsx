@@ -25,32 +25,27 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      // Try to get existing stats
-      const { data: existingStats, error: fetchError } = await supabase
+      // Use upsert operation to handle race conditions
+      const { data: stats, error } = await supabase
         .from('user_stats')
-        .select('*')
-        .eq('user_id', user.user.id)
-        .maybeSingle();
-
-      // If no stats exist, create initial stats
-      if (!existingStats && !fetchError) {
-        const { data: newStats, error: insertError } = await supabase
-          .from('user_stats')
-          .insert({
+        .upsert(
+          {
             user_id: user.user.id,
             avg_completion_time: 0,
             completion_rate: 0,
             total_tasks: 0,
             completed_tasks: 0
-          })
-          .select()
-          .single();
+          },
+          {
+            onConflict: 'user_id',
+            ignoreDuplicates: true
+          }
+        )
+        .select()
+        .single();
 
-        if (!insertError && newStats) {
-          setUserStats(newStats);
-        }
-      } else if (existingStats) {
-        setUserStats(existingStats);
+      if (!error && stats) {
+        setUserStats(stats);
       }
     };
 
@@ -58,7 +53,6 @@ export const TaskInsights = ({ tasks, currentTask }: TaskInsightsProps) => {
   }, [tasks]);
 
   const insights = useMemo(() => {
-    // Calculate priority-specific completion rates
     const priorityStats = {
       high: { total: 0, completed: 0 },
       medium: { total: 0, completed: 0 },
